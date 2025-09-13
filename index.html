@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Campus Assistant</title>
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background:#111; /* Dark background */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Floating shapes & emojis */
+.shape{position:absolute;border-radius:50%;opacity:0.1;animation:float 20s infinite;pointer-events:none;}
+@keyframes float{0%{transform:translateY(0);}50%{transform:translateY(-40px) translateX(20px);}100%{transform:translateY(0);}}
+.emoji{position:absolute;font-size:32px;opacity:0.2;animation:floatEmoji 15s infinite ease-in-out;pointer-events:none;transition:transform 0.3s;}
+@keyframes floatEmoji{0%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-50px) rotate(20deg);}100%{transform:translateY(0) rotate(0deg);}}
+
+/* Chat container */
+.chat-container{width:500px;height:680px;background:#111;border:2px solid #fff;border-radius:25px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.6);position:relative;z-index:10;}
+
+/* Welcome screen */
+.welcome-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:30;border-radius:25px;opacity:1;transition:opacity 0.5s;}
+.welcome-screen h1{font-size:28px;margin:0 0 15px;}
+.welcome-screen p{font-size:16px;margin:0 0 20px;}
+.welcome-screen button{padding:10px 20px;font-size:14px;border:none;border-radius:12px;background:#fff;color:#000;cursor:pointer;transition:0.3s;}
+.welcome-screen button:hover{background:#eee; transform:scale(1.05);}
+
+/* Chat header */
+.chat-header{background:#000;color:#fff;padding:18px;text-align:center;font-size:22px;font-weight:bold;border-top-left-radius:25px;border-top-right-radius:25px;display:flex;justify-content:space-between;align-items:center;}
+.header-buttons button{background:#fff;color:#000;padding:6px 12px;border:none;border-radius:12px;cursor:pointer;margin-left:8px;transition:0.3s;}
+.header-buttons button:hover{background:#eee;transform:scale(1.05);}
+
+/* Chat box */
+.chat-box{flex:1;padding:15px;overflow-y:auto;background:#111;color:#fff;position:relative;}
+.chat-message{margin:10px 0;padding:12px 16px;border-radius:18px;max-width:75%;line-height:1.4;display:inline-block;opacity:0; transform:translateY(20px); transition:0.4s;}
+.chat-message.show{opacity:1; transform:translateY(0);}
+.user-message{background:#fff;color:#000;margin-left:auto;border-bottom-right-radius:5px;}
+.bot-message{background:#333;color:#fff;margin-right:auto;border-bottom-left-radius:5px;}
+
+/* Chat input */
+.chat-input{display:flex;border-top:1px solid #fff;background:#111;}
+.chat-input input{flex:1;padding:12px;border:none;outline:none;font-size:14px;background:#222;color:#fff;}
+.chat-input button{background:#fff;border:none;color:#000;padding:12px 18px;cursor:pointer;transition:0.3s;}
+.chat-input button:hover{background:#eee;transform:scale(1.05);}
+
+/* Options line-style */
+.options{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.option-btn{background:transparent;color:#fff;border:none;border-bottom:1px solid #fff;padding:8px 0;cursor:pointer;font-size:14px;text-align:left;opacity:0; transform:translateX(-20px); transition:0.4s;}
+.option-btn.show{opacity:1; transform:translateX(0);}
+.option-btn:hover{color:#00ffff;}
+
+/* Detail slide */
+.detail-slide{position:absolute;top:0;left:100%;width:100%;height:100%;background:#111;border:2px solid #fff;border-radius:25px;padding:20px;box-sizing:border-box;transition:left 0.5s ease;overflow-y:auto;z-index:20;color:#fff;}
+.detail-slide.show{left:0;}
+.detail-slide h3{margin-top:0;color:#fff;}
+.detail-slide p{margin:10px 0;font-size:14px;white-space:pre-wrap;}
+.nav-btn{background:#fff;color:#000;padding:6px 12px;border:none;border-radius:12px;cursor:pointer;transition:0.3s;}
+.nav-btn:hover{background:#eee;}
+
+/* Letter animation */
+.letter{display:inline-block;opacity:0; animation:letterAppear 0.4s forwards;}
+@keyframes letterAppear{0%{opacity:0; transform:translateY(10px) scale(0.5);}50%{transform:translateY(-2px) scale(1.2);}100%{opacity:1; transform:translateY(0) scale(1);}}
+</style>
+</head>
+<body>
+
+<div class="shape" style="width:150px;height:150px;background:#fff;top:10%;left:5%;animation-duration:25s;"></div>
+<div class="shape" style="width:100px;height:100px;background:#fff;top:50%;left:80%;animation-duration:30s;"></div>
+<div class="shape" style="width:120px;height:120px;background:#fff;top:70%;left:20%;animation-duration:22s;"></div>
+<div class="emoji" style="top:15%;left:10%;">💰</div>
+<div class="emoji" style="top:40%;left:70%;">📝</div>
+<div class="emoji" style="top:65%;left:30%;">📚</div>
+<div class="emoji" style="top:20%;left:50%;">🤖</div>
+<div class="emoji" style="top:75%;left:80%;">💳</div>
+
+<div class="chat-container">
+  <div class="chat-header">
+    Smart Campus Assistant
+    <div class="header-buttons">
+      <button onclick="refreshChat()">🔄 Refresh</button>
+      <button onclick="newChat()">✨ New</button>
+    </div>
+  </div>
+  <div class="chat-box" id="chat-box"></div>
+  <div class="chat-input">
+    <input type="text" id="user-input" placeholder="Type your question...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<div class="welcome-screen" id="welcome-screen">
+  <h1>👋 Welcome to Smart Campus Assistant</h1>
+  <p>Your AI assistant for campus info, exams, library, dining, and admin services!</p>
+  <button onclick="startChat()">Start Chat</button>
+</div>
+
+<script>
+const chatBox=document.getElementById("chat-box");
+const welcome=document.getElementById("welcome-screen");
+
+// Campus options
+const menu={
+  "Academic Schedules":{"Timetable":"📝 Timetable: Mon-Fri 9AM-5PM","Faculty Info":"👩‍🏫 List of faculty members and office hours","Exams/Results":"📊 Exam schedules and results"},
+  "Library Services":{"Timings":"📚 9AM–6PM","Borrowing Rules":"📖 Borrow up to 3 books for 15 days","Location":"🏛️ Block A, 1st Floor"},
+  "Dining Services":{"Meal Timings":"🍽️ Breakfast 8-9AM, Lunch 12-1PM, Dinner 7-8PM","Menu":"🥗 Menu updated daily","Location":"🍴 Main Cafeteria"},
+  "Administrative Procedures":{"Fees & Payment":"💰 Fee payment counters Block A/B","Forms & Applications":"📝 Fill forms at admin office or online","Contacts":"📞 Admin contact numbers"},
+  "Other":{"Campus Map":"🗺️ Main campus map link","Events/Notices":"📢 Upcoming events and notices"}
+};
+
+function startChat(){ welcome.style.opacity=0; setTimeout(()=>welcome.style.display='none',500); showBotMessage("👋 Hello! Select an option below to continue:"); showOptions(Object.keys(menu)); }
+function refreshChat(){ chatBox.innerHTML=''; showBotMessage("🔄 Chat refreshed! Select an option below:"); showOptions(Object.keys(menu)); }
+function newChat(){ chatBox.innerHTML=''; welcome.style.display='flex'; welcome.style.opacity=1; }
+
+function showBotMessage(text){ const msg=document.createElement("div"); msg.classList.add("chat-message","bot-message","show"); msg.innerText="🤖 "+text; chatBox.appendChild(msg); chatBox.scrollTo({top:chatBox.scrollHeight,behavior:'smooth'}); }
+
+function sendMessage(){ const input=document.getElementById("user-input"); const msg=input.value.trim(); if(!msg) return; const userMsg=document.createElement("div"); userMsg.classList.add("chat-message","user-message","show"); userMsg.innerText="🙂 "+msg; chatBox.appendChild(userMsg); input.value=''; chatBox.scrollTo({top:chatBox.scrollHeight,behavior:'smooth'}); setTimeout(()=>processMessage(msg),500); }
+
+function processMessage(msg){ if(menu[msg]){ showBotMessage(`Here are sub-options for ${msg}:`); showOptions(Object.keys(menu[msg]),menu[msg]); } else showBotMessage(menuReply(msg)); }
+function menuReply(input){ for(let m in menu){ for(let s in menu[m]){ if(input.toLowerCase().includes(s.toLowerCase())) return menu[m][s]; } } return "❓ Please select from the given options."; }
+
+function showOptions(options,parent=null){
+  const div=document.createElement("div"); div.classList.add("options");
+  options.forEach((opt,i)=>{
+    const btn=document.createElement("button"); btn.classList.add("option-btn"); btn.innerText=opt;
+    btn.onclick=()=>{
+      const userMsg=document.createElement("div"); userMsg.classList.add("chat-message","user-message","show"); userMsg.innerText="🙂 "+opt; chatBox.appendChild(userMsg); chatBox.scrollTo({top:chatBox.scrollHeight,behavior:'smooth'}); 
+      if(parent){ showDetailSlide(opt,parent); } else processMessage(opt);
+    };
+    div.appendChild(btn);
+    setTimeout(()=>btn.classList.add("show"),i*100);
+  });
+  chatBox.appendChild(div);
+  chatBox.scrollTo({top:chatBox.scrollHeight,behavior:'smooth'});
+}
+
+// Detail slide with Next/Previous/Close
+function showDetailSlide(title,category){
+  const keys=Object.keys(category);
+  let index=keys.indexOf(title);
+
+  const slide=document.createElement("div"); 
+  slide.classList.add("detail-slide");
+  slide.innerHTML=`
+    <h3>${title}</h3>
+    <p></p>
+    <div style="display:flex;justify-content:space-between;margin-top:15px;">
+      <button class="nav-btn" id="prev">⬅ Previous</button>
+      <button class="nav-btn" id="next">Next ➡</button>
+      <button class="nav-btn" id="close">❌ Close</button>
+    </div>
+  `;
+
+  const p=slide.querySelector("p");
+  function showText(txt){
+    p.innerHTML="";
+    txt.split("").forEach((l,i)=>{
+      const span=document.createElement("span");
+      span.classList.add("letter");
+      span.style.animationDelay=(i*0.03)+"s";
+      span.innerText=l;
+      p.appendChild(span);
+    });
+  }
+  showText(category[title]);
+
+  slide.querySelector("#prev").onclick=()=>{
+    if(index>0){ index--; title=keys[index]; showText(category[title]); slide.querySelector("h3").innerText=title; }
+  };
+  slide.querySelector("#next").onclick=()=>{
+    if(index<keys.length-1){ index++; title=keys[index]; showText(category[title]); slide.querySelector("h3").innerText=title; }
+  };
+  slide.querySelector("#close").onclick=()=>{ slide.remove(); showOptions(keys,category); };
+
+  chatBox.appendChild(slide);
+  setTimeout(()=>slide.classList.add("show"),50);
+}
+</script>
+</body>
+</html>
